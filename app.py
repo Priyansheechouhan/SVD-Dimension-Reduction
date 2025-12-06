@@ -24,8 +24,14 @@ def success():
     # Checking if the request method is POST
     # Checking if the request method is POST, indicating form submission
     if request.method == 'POST':
-        
-        f = request.files['file'] # Retrieving the uploaded file 
+        file = request.files.get("file")  # or whatever form-field name you use
+
+        if not file or file.filename == "":
+            return "No file uploaded", 400
+
+        import io
+        print("Uploaded file name:", file.filename)
+        #f = request.files['file'] # Retrieving the uploaded file 
         #user = request.form['user'] # Retrieving the username
         #pw = quote(request.form['pw']) # Retrieving the password 
         #db = request.form['db'] # Retrieving the database name
@@ -93,6 +99,7 @@ def success():
 if __name__ == '__main__':
     # Enabling debug mode for easier development
     app.run(debug=True)
+
 
 
 

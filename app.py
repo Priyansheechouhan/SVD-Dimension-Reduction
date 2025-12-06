@@ -45,7 +45,8 @@ def success():
                 data = pd.DataFrame(f)
                   
         # Drop the unwanted feature 'UnivID'
-        data1 = data.drop(["UnivID"], axis = 1)
+        if "UnivID" in data.columns:
+            data1 = data.drop(["UnivID"], axis=1)
         
         # Selecting only numeric columns
         num_cols = data1.select_dtypes(exclude = ['object']).columns
@@ -90,4 +91,5 @@ def success():
 if __name__ == '__main__':
     # Enabling debug mode for easier development
     app.run(debug=True)
+
 

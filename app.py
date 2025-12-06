@@ -1,7 +1,7 @@
 # Importing necessary modules
 # from cProfile import run  # Importing cProfile module for performance profiling (commented out)
 from flask import Flask, render_template, request  # Importing Flask module for creating web applications
-from sqlalchemy import create_engine  # Importing create_engine from SQLAlchemy for database connection
+#from sqlalchemy import create_engine  # Importing create_engine from SQLAlchemy for database connection
 import pandas as pd  # Importing Pandas library for data manipulation and analysis
 from urllib.parse import quote
 # Creating a Flask application instance
@@ -26,12 +26,12 @@ def success():
     if request.method == 'POST':
         
         f = request.files['file'] # Retrieving the uploaded file 
-        user = request.form['user'] # Retrieving the username
-        pw = quote(request.form['pw']) # Retrieving the password 
-        db = request.form['db'] # Retrieving the database name
+        #user = request.form['user'] # Retrieving the username
+        #pw = quote(request.form['pw']) # Retrieving the password 
+        #db = request.form['db'] # Retrieving the database name
 
         # Creating an engine to connect to the MySQL database
-        engine = create_engine(f"mysql+pymysql://{user}:{pw}@localhost/{db}")
+        #engine = create_engine(f"mysql+pymysql://{user}:{pw}@localhost/{db}")
 
         try:
             # Attempting to read the uploaded file as CSV
@@ -57,7 +57,7 @@ def success():
         final = pd.concat([data.Univ, svd_res], axis = 1)
         
         # Writing the final dataframe to a new table 'university_pred_svd' in the database
-        final.to_sql('university_pred_svd', con=engine, if_exists='replace', chunksize=1000, index=False)
+        #final.to_sql('university_pred_svd', con=engine, if_exists='replace', chunksize=1000, index=False)
         
         # Converting the final dataframe to HTML table format with specified classes for styling
         html_table = final.to_html(classes='table table-striped')
@@ -90,3 +90,4 @@ def success():
 if __name__ == '__main__':
     # Enabling debug mode for easier development
     app.run(debug=True)
+

@@ -41,14 +41,14 @@ def success():
 
         try:
             # Attempting to read the uploaded file as CSV
-            data = pd.read_csv(f)
+            data = pd.read_csv(file)
         except:
             try:
                 # Attempting to read the uploaded file as Excel
-                data = pd.read_excel(f)
+                data = pd.read_excel(file)
             except:      
                 # If unable to read as CSV or Excel, treating the file as DataFrame directly
-                data = pd.DataFrame(f)
+                data = pd.DataFrame(file)
                   
         # Drop the unwanted feature 'UnivID'
         if "UnivID" in data.columns:
@@ -99,6 +99,7 @@ def success():
 if __name__ == '__main__':
     # Enabling debug mode for easier development
     app.run(debug=True)
+
 
 
 

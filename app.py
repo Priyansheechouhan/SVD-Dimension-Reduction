@@ -50,7 +50,10 @@ def success():
             except:      
                 # If unable to read as CSV or Excel, treating the file as DataFrame directly
                 data = pd.DataFrame(file)
-        print(data.columns)         
+        print(data.columns)  
+        print("Columns:", data.columns.tolist())
+        print("Missing:", missing)
+        print("Shape:", data.shape)
         # Drop the unwanted feature 'UnivID'
         if "UnivID" in data.columns:
             data1 = data.drop(["UnivID"], axis=1)
@@ -100,6 +103,7 @@ def success():
 if __name__ == '__main__':
     # Enabling debug mode for easier development
     app.run(debug=True)
+
 
 
 

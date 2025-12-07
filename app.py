@@ -1,41 +1,42 @@
 # Importing necessary modules
-from flask import Flask, render_template, request
-import pandas as pd
-from urllib.parse import quote
-import joblib
+from flask import Flask, render_template, request  # Importing Flask module for creating web applications
+import pandas as pd  # Importing Pandas library for data manipulation and analysis
 
 # Creating a Flask application instance
 app = Flask(__name__)
 
-# Load the saved SVD model
+# Importing the saved SVD model using joblib
+import joblib
 model = joblib.load("svd_DimRed")
 
-# Home page route
+
+# Route for the home page of the Flask application
 @app.route('/')
 def home():
+    # Rendering the 'index.html' template when the root URL is accessed
     return render_template('index.html')
 
-# Route for handling file upload & performing SVD transformation
+
+# Route for handling file upload and performing prediction
 @app.route('/success', methods=['POST'])
 def success():
     if request.method == 'POST':
+        file = request.files.get("file")  # get the uploaded file
 
-        # ----------- 1. FILE VALIDATION -----------
-        file = request.files.get("file")
         if not file or file.filename == "":
             return "No file uploaded", 400
 
         filename = file.filename.lower()
-        print("Uploaded file name:", file.filename)
+        print("Uploaded file name:", filename)
 
-        # ----------- 2. FILE READING SAFELY -----------
+        # ---- 1. Read the uploaded file safely (CSV / Excel) ----
         try:
             if filename.endswith(".csv"):
                 data = pd.read_csv(file)
-            elif filename.endswith(".xlsx"):
+            elif filename.endswith(".xlsx") or filename.endswith(".xls"):
                 data = pd.read_excel(file)
             else:
-                return "Unsupported file type. Upload CSV or Excel only.", 400
+                return "Unsupported file format. Please upload CSV or Excel.", 400
         except Exception as e:
             print("Error reading file:", e)
             return f"Error reading file: {e}", 400
@@ -43,30 +44,44 @@ def success():
         print("Columns:", data.columns.tolist())
         print("Shape:", data.shape)
 
-        if data.shape[0] == 0:
-            return "Uploaded file is empty or unreadable.", 400
+        # ---- 2. Ensure required columns are present ----
+        # Columns in your dataset
+        required_cols = ['Univ', 'SAT', 'Top10', 'Accept',
+                         'SFRatio', 'Expenses', 'GradRate']
+        missing = [c for c in required_cols if c not in data.columns]
+        if missing:
+            return f"Missing required columns in uploaded file: {missing}", 400
 
-        # ----------- 3. PREPROCESSING (MATCH TRAINING PIPELINE) -----------
-        # Drop UnivID column if present
-        data = data.drop(['UnivID'], axis=1, errors='ignore')
+        # ---- 3. Drop UnivID if present, keep everything else ----
+        if "UnivID" in data.columns:
+            data1 = data.drop(["UnivID"], axis=1)
+        else:
+            data1 = data.copy()
 
-        # Select only numeric columns used during training
-        # Because SVD can ONLY transform numeric features
+        # ---- 4. Explicit numeric columns used when training the model ----
         num_cols = ['SAT', 'Top10', 'Accept', 'SFRatio', 'Expenses', 'GradRate']
 
-        # Check if required numeric columns exist
-        missing = [c for c in num_cols if c not in data.columns]
-        print("Missing numeric columns:", missing)
+        # Clean numeric columns: remove thousand separators like "21,864" -> "21864"
+        for col in num_cols:
+            # Convert to string, strip spaces, remove commas, then to numeric
+            data1[col] = (
+                data1[col]
+                .astype(str)
+                .str.replace(",", "", regex=False)
+                .str.strip()
+            )
+            data1[col] = pd.to_numeric(data1[col], errors="coerce")
 
-        if missing:
-            return f"Uploaded file missing required numeric columns: {missing}", 400
+        print("Numeric dtypes after cleaning:")
+        print(data1[num_cols].dtypes)
 
-        data_num = data[num_cols]
+        # Drop rows where ALL numeric columns are NaN
+        data_num = data1[num_cols].dropna(how="all")
 
         if data_num.shape[0] == 0:
-            return "No valid numeric rows found for SVD transformation.", 400
+            return "No valid numeric data after cleaning. Please check your file.", 400
 
-        # ----------- 4. APPLY SVD MODEL SAFELY -----------
+        # ---- 5. Model transformation (SVD) ----
         try:
             svd_res = pd.DataFrame(
                 model.transform(data_num),
@@ -76,46 +91,46 @@ def success():
             print("Model transformation error:", e)
             return f"Model transformation error: {e}", 400
 
-        # ----------- 5. MERGE UNIV NAME + SVD RESULTS -----------
-        if "Univ" in data.columns:
-            final = pd.concat([data["Univ"], svd_res], axis=1)
-        else:
-            final = svd_res
+        # Align the Univ column with data_num (in case some rows were dropped)
+        univ_series = data.loc[data_num.index, 'Univ'].reset_index(drop=True)
+        svd_res = svd_res.reset_index(drop=True)
 
-        # Convert to HTML table
-        try:
-            html_table = final.to_html(classes='table table-striped')
-        except Exception as e:
-            print("HTML conversion error:", e)
-            html_table = "<p>Error converting table to HTML.</p>"
+        # ---- 6. Final result table ----
+        final = pd.concat([univ_series.rename("Univ"), svd_res], axis=1)
 
-        # ----------- 6. RETURN RESULT PAGE -----------
+        html_table = final.to_html(classes='table table-striped', index=False)
+
+        # ---- 7. Render HTML with inline CSS ----
         return render_template(
             "data.html",
-            Y=f"""
-                <style>
-                    .table {{
-                        width: 70%;
-                        margin: 20px auto;
-                        border-collapse: collapse;
-                    }}
-                    .table thead {{
-                        background-color: #39648f;
-                        color: white;
-                    }}
-                    .table th, .table td {{
-                        border: 1px solid #ddd;
-                        padding: 8px;
-                        text-align: center;
-                    }}
-                    .table td {{
-                        background-color: #a8dfe3;
-                    }}
-                </style>
-                {html_table}
-            """
+            Y=(
+                "<style>\
+                    .table {\
+                        width: 50%;\
+                        margin: 0 auto;\
+                        border-collapse: collapse;\
+                    }\
+                    .table thead {\
+                        background-color: #39648f;\
+                    }\
+                    .table th, .table td {\
+                        border: 1px solid #ddd;\
+                        padding: 8px;\
+                        text-align: center;\
+                    }\
+                    .table td {\
+                        background-color: #a8dfe3;\
+                    }\
+                    .table tbody th {\
+                        background-color: #ab2c3f;\
+                    }\
+                </style>"
+                + html_table
+            )
         )
 
-# Run the application
+
+# Running the Flask application
 if __name__ == '__main__':
+    # Enabling debug mode for easier development
     app.run(debug=True)

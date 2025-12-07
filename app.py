@@ -50,30 +50,33 @@ def success():
             except:      
                 # If unable to read as CSV or Excel, treating the file as DataFrame directly
                 data = pd.DataFrame(file)
-        print(data.columns)  
-        print("Columns:", data.columns.tolist())
-        print("Shape:", data.shape)
-        # Drop the unwanted feature 'UnivID'
-        if "UnivID" in data.columns:
-            data1 = data.drop(["UnivID"], axis=1)
-        else:
-            data1 = data
+        try:
+            print(data.columns)  
+            print("Columns:", data.columns.tolist())
+            print("Shape:", data.shape)
+            # Drop the unwanted feature 'UnivID'
+            if "UnivID" in data.columns:
+                data1 = data.drop(["UnivID"], axis=1)
+            else:
+                data1 = data
         
-        # Selecting only numeric columns
-        num_cols = data1.select_dtypes(exclude = ['object']).columns
+            # Selecting only numeric columns
+            num_cols = data1.select_dtypes(exclude = ['object']).columns
         
         # Performing dimensionality reduction (SVD) using the saved model
-        svd_res = pd.DataFrame(model.transform(data1[num_cols]), columns = ['svd0', 'svd1', 'svd2', 'svd3', 'svd4', 'svd5'])
+            svd_res = pd.DataFrame(model.transform(data1[num_cols]), columns = ['svd0', 'svd1', 'svd2', 'svd3', 'svd4', 'svd5'])
         
         # Concatenating the university names and SVD components into a final dataframe
-        final = pd.concat([data.Univ, svd_res], axis = 1)
+            final = pd.concat([data.Univ, svd_res], axis = 1)
         
         # Writing the final dataframe to a new table 'university_pred_svd' in the database
         #final.to_sql('university_pred_svd', con=engine, if_exists='replace', chunksize=1000, index=False)
         
         # Converting the final dataframe to HTML table format with specified classes for styling
-        html_table = final.to_html(classes='table table-striped')
-        
+            html_table = final.to_html(classes='table table-striped')
+        except Exception as error:
+            print(error)
+
         # Rendering the 'data.html' template with the HTML table data
         return render_template("data.html", Y=f"<style>\
                     .table {{\
@@ -102,6 +105,7 @@ def success():
 if __name__ == '__main__':
     # Enabling debug mode for easier development
     app.run(debug=True)
+
 
 
 

@@ -53,7 +53,7 @@ The reduced data is then passed to the ML model for training and evaluation.
 - 1️⃣ Load dataset
 - 2️⃣ Preprocess features(dropping unrelated freatures, finding missing values etc.)
 - 3️⃣ Extract numeric columns
-- 4️⃣ Model Tranformation
+- 4️⃣ Model Tranformation and Keep top k components
 - 5️⃣ combining transform data with previous data for better understanding
 - 6️⃣ rendering transform data with html table
 - 7️⃣ Deploy the model on Render

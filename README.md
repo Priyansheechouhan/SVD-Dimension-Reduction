@@ -31,3 +31,34 @@ The reduced data is then passed to the ML model for training and evaluation.
 - Compare performance
 
 - Deploy the project on Render for real-time inference
+
+## 🔧 Technologies Used
+
+- Python
+
+- NumPy
+
+- Pandas
+
+- Scikit-Learn
+
+- SVD (NumPy / SciPy / sklearn TruncatedSVD)
+
+- Flask / Streamlit (depending on your implementation)
+
+- Render for deployment
+
+## 📊 Workflow of the Project
+
+1️⃣ Load dataset
+2️⃣ Preprocess features(dropping unrelated freatures, finding missing values etc.)
+3️⃣ Extract numeric columns
+4️⃣ Model Tranformation
+5️⃣ combining transform data with previous data for better understanding
+6️⃣ rendering transform data with html table
+7️⃣ Deploy the model on Render
+8️⃣ Allow users to enter input and get predictions
+
+## 🌐 Live Demo (Render Deployment)
+
+👉 Deployed App: [https://svd-dimension-reduction.onrender.com]
